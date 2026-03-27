@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LABEL MN | Ухаалаг Хяналт</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #020817;
+            --accent: #2ecc71;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(circle at 80% 20%, rgba(46, 204, 113, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(52, 152, 219, 0.12) 0%, transparent 40%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .container { width: 100%; max-width: 500px; margin: 0 auto; padding: 40px 24px; flex: 1; }
+
+        /* --- LOGO & HEADER --- */
+        .brand { margin-bottom: 60px; animation: fadeIn 1s ease; }
+        .brand h1 { font-size: 56px; font-weight: 400; letter-spacing: 10px; margin-bottom: 8px; }
+        .brand p { font-size: 12px; letter-spacing: 4px; color: var(--text-secondary); text-transform: uppercase; }
+
+        /* --- BUTTONS --- */
+        .nav-menu { display: flex; flex-direction: column; gap: 16px; }
+        .btn-ui {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            padding: 24px;
+            border-radius: 4px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+        }
+        .btn-ui:active { background: rgba(255, 255, 255, 0.1); transform: scale(0.98); }
+        .btn-ui span { font-size: 20px; }
+
+        /* --- SCANNER VIEW --- */
+        #scanner-page, #about-page { display: none; animation: slideUp 0.5s ease; }
+        
+        .cam-frame {
+            width: 100%; height: 380px;
+            background: #000; border-radius: 12px;
+            position: relative; overflow: hidden;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 24px;
+        }
+        #video { width: 100%; height: 100%; object-fit: cover; opacity: 0.9; }
+        .laser {
+            position: absolute; width: 100%; height: 2px;
+            background: var(--accent); top: 0;
+            animation: scanning 2.5s infinite linear;
+            box-shadow: 0 0 20px var(--accent);
+        }
+
+        /* --- RESULTS --- */
+        .result-box {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            padding: 24px; border-radius: 12px;
+            margin-top: 24px;
+        }
+        .item-card {
+            border-left: 4px solid var(--accent);
+            padding-left: 16px; margin-bottom: 20px;
+        }
+        .item-card.danger { border-left-color: #ff4757; }
+        .source-tag { font-size: 10px; opacity: 0.4; text-transform: uppercase; margin-top: 8px; }
+
+        /* --- ABOUT PAGE --- */
+        .profile-pic { width: 80px; height: 80px; background: var(--glass); border: 1px solid var(--accent); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 32px; }
+
+        footer { padding: 30px; text-align: center; font-size: 10px; opacity: 0.3; letter-spacing: 1px; }
+
+        @keyframes scanning { 0% { top: 0; } 100% { top: 100%; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="container" id="main-page">
+    <div class="brand">
+        <h1>LABEL MN</h1>
+        <p>ЭРҮҮЛ АХУЙН ТУСЛАХ</p>
+    </div>
+
+    <div class="nav-menu">
+        <div class="btn-ui" onclick="showPage('scanner-page')">Шошго уншуулах <span>›</span></div>
+        <div class="btn-ui" onclick="showPage('about-page')">Бидний тухай <span>›</span></div>
+    </div>
+</div>
+
+<div class="container" id="scanner-page">
+    <div onclick="showPage('main-page')" style="margin-bottom: 30px; cursor: pointer; color: var(--accent); font-size: 14px;">‹ БУЦАХ</div>
+    
+    <div class="cam-frame">
+        <video id="video" autoplay playsinline></video>
+        <div class="laser"></div>
+    </div>
+
+    <button id="snap" class="btn-ui" style="width: 100%; background: var(--accent); color: #000;">
+        ЗУРАГ ДАРАХ & ШИНЖЛЭХ <span>⚡</span>
+    </button>
+
+    <div id="loader" style="display:none; text-align: center; margin-top: 20px; font-size: 12px; color: var(--accent);">AI БОЛОВСРУУЛЖ БАЙНА...</div>
+
+    <div id="results" class="result-box" style="display: none;">
+        <h3 style="margin-bottom: 15px; color: var(--accent);">ШИНЖИЛГЭЭНИЙ ДҮН</h3>
+        <div id="analysis-output"></div>
+    </div>
+</div>
+
+<div class="container" id="about-page">
+    <div onclick="showPage('main-page')" style="margin-bottom: 30px; cursor: pointer; color: var(--accent); font-size: 14px;">‹ БУЦАХ</div>
+    
+    <div class="result-box" style="text-align: center;">
+        <div class="profile-pic">🧑‍💻</div>
+        <h2 style="margin-bottom: 15px;">ХӨГЖҮҮЛЭГЧ</h2>
+        <p style="font-size: 14px; line-height: 1.6; opacity: 0.8; margin-bottom: 24px;">
+            Сайн байна уу! Намайг <b>Вансэмбэрүү</b> гэдэг. <br> Тосонцэнгэл 2-р сургуулийн 11-р ангийн сурагч. 
+            Нийгмийн эрүүл мэндийн төлөөх <b>Label MN</b> төслийг хөгжүүлэгч.
+        </p>
+        <div class="nav-menu">
+            <a href="#" class="btn-ui" style="text-transform: none;">📸 Instagram: @_seku___te <span>›</span></a>
+            <a href="#" class="btn-ui" style="text-transform: none;">🔵 Facebook: Seku Vnsmbru <span>›</span></a>
+            <div class="btn-ui" style="text-transform: none; cursor: default;">📞 Утас: 88132698 <span>•</span></div>
+        </div>
+    </div>
+</div>
+
+<footer> &copy; 2026 Вансэмбэрүү Оюуны өмчөөр хамгаалагдсан.</footer>
+
+<script>
+    // --- ЭХ СУРВАЛЖ: ШИНЖЛЭХ УХААНЫ САН ---
+    const ingredientsDB = {
+        "E211": { name: "Sodium Benzoate (Натрийн Бензоат)", risk: "Өндөр", info: "Витамин С-тэй нэгдвэл бензол үүсгэнэ. Хүүхдийн идэвхжилд сөрөг нөлөөтэй.", source: "EFSA / FDA" },
+        "E621": { name: "MSG (Амт Оруулагч)", risk: "Дунд", info: "Мэдрэлийн системд нөлөөлөх магадлалтай. Толгой өвдөх шинж тэмдэг илрүүлдэг.", source: "FDA" },
+        "E102": { name: "Tartrazine (Шар будагч)", risk: "Өндөр", info: "Хэт идэвхжил үүсгэдэг. Европын холбоонд анхааруулгатай хэрэглэдэг.", source: "EFSA" },
+        "Sugar": { name: "Сахар (Чихэр)", risk: "Дунд", info: "Их хэмжээгээр хэрэглэх нь таргалалт, чихрийн шижинд хүргэнэ.", source: "WHO" },
+        "Palm Oil": { name: "Далдуу модны тос", risk: "Дунд", info: "Ханасан өөх тос ихтэй. Зүрх судасны өвчлөлд нөлөөлнө.", source: "WHO" }
+    };
+
+    function showPage(pageId) {
+        document.getElementById('main-page').style.display = 'none';
+        document.getElementById('scanner-page').style.display = 'none';
+        document.getElementById('about-page').style.display = 'none';
+        document.getElementById(pageId).style.display = 'block';
+        if(pageId === 'scanner-page') startCamera();
+    }
+
+    async function startCamera() {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        document.getElementById('video').srcObject = stream;
+    }
+
+    document.getElementById('snap').addEventListener('click', async () => {
+        const video = document.getElementById('video');
+        const loader = document.getElementById('loader');
+        const snapBtn = document.getElementById('snap');
+        
+        loader.style.display = 'block';
+        snapBtn.disabled = true;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+
+        try {
+            const worker = await Tesseract.createWorker('eng');
+            const { data: { text } } = await worker.recognize(canvas.toDataURL('image/jpeg'));
+            await worker.terminate();
+            processAnalysis(text);
+        } catch (e) {
+            alert("Алдаа гарлаа. Дахин оролдоно уу.");
+        } finally {
+            loader.style.display = 'none';
+            snapBtn.disabled = false;
+        }
+    });
+
+    function processAnalysis(rawText) {
+        const output = document.getElementById('analysis-output');
+        document.getElementById('results').style.display = 'block';
+        let html = "";
+        let found = false;
+
+        Object.keys(ingredientsDB).forEach(key => {
+            if(rawText.toLowerCase().includes(key.toLowerCase())) {
+                const item = ingredientsDB[key];
+                html += `
+                    <div class="item-card ${item.risk === 'Өндөр' ? 'danger' : ''}">
+                        <strong style="color:var(--accent)">${item.name}</strong>
+                        <p style="font-size:13px; margin-top:5px; opacity:0.8;">${item.info}</p>
+                        <div class="source-tag">Эх сурвалж: ${item.source}</div>
+                    </div>
+                `;
+                found = true;
+            }
+        });
+
+        output.innerHTML = found ? html : "<p style='opacity:0.5; font-size:13px;'>Аюултай бодис илэрсэнгүй. (Уншигдсан текст: " + rawText.substring(0, 50) + "...)</p>";
+    }
+</script>
+</body>
+</html>
